@@ -7,7 +7,7 @@ import UsuarioRouter from "../BackEnd/routes/UsuarioRoute.js";
 const app = express();
 
 // Middlewares
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 // Método o Ruta de prueba para el API

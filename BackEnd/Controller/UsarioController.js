@@ -13,11 +13,14 @@ const UsuarioController = {
     obtenerDatosUsuarios: async (request, response) => {
         try {
 
-            const sortBy = request.query.sortBy || 'fechaRegistro';
+            let sortOrder;
+            let sortBy = request.query.sortBy || 'fechaRegistro';
             if (request.query.order) {
-                const order = request.query.order.toLowerCase();
+                let order = request.query.order.toLowerCase();
                 if (order === 'asc') {
                     sortOrder = 1;
+                } else if (order ==='desc'){
+                    sortOrder = -1;
                 } else if (order !== 'desc') {
                     // Si el valor de 'order' no es 'asc' ni 'desc', podrías devolver un error
                     return response.status(400).send({
@@ -27,7 +30,7 @@ const UsuarioController = {
             }
 
 
-            const usuarios = await Usuario.find().sort({[sortBy]: sortOrder});
+            let usuarios = await Usuario.find().sort({[sortBy]: sortOrder});
             
             await UsuarioValidator.validarListaUsuarios(usuarios);
 
@@ -50,11 +53,14 @@ const UsuarioController = {
     obtenerDatosUsuarioByNombre: async (request, response) => {
         let nombre;
         try{
-            const sortBy = request.query.sortBy || 'fechaRegistro';
+            let sortOrder;
+            let sortBy = request.query.sortBy || 'fechaRegistro';
             if (request.query.order) {
-                const order = request.query.order.toLowerCase();
+                let order = request.query.order.toLowerCase();
                 if (order === 'asc') {
                     sortOrder = 1;
+                }else if (order ==='desc'){
+                    sortOrder = -1;
                 } else if (order !== 'desc') {
                     // Si el valor de 'order' no es 'asc' ni 'desc', podrías devolver un error
                     return response.status(400).send({
@@ -63,11 +69,11 @@ const UsuarioController = {
                 }
             }
 
-            const nombreSinSanitizar = request.params.nombre;
+            let nombreSinSanitizar = request.params.nombre;
             nombre = validator.blacklist(nombreSinSanitizar, '!"#$%&/()=?¿¡');
-            const regex = new RegExp(nombre, 'i');
+            let regex = new RegExp(nombre, 'i');
             
-            const usuario = await Usuario.find({ nombre: regex }).sort({[sortBy]: sortOrder});
+            let usuario = await Usuario.find({ nombre: regex }).sort({[sortBy]: sortOrder});
 
             await UsuarioValidator.validarUsuarios(usuario);
 
@@ -89,11 +95,14 @@ const UsuarioController = {
     obtenerDatosUsuarioByEmail: async (request, response) => {
         let email;
         try{
-            const sortBy = request.query.sortBy || 'fechaRegistro';
+            let sortOrder;
+            let sortBy = request.query.sortBy || 'fechaRegistro';
             if (request.query.order) {
-                const order = request.query.order.toLowerCase();
+                let order = request.query.order.toLowerCase();
                 if (order === 'asc') {
                     sortOrder = 1;
+                }else if (order ==='desc'){
+                    sortOrder = -1;
                 } else if (order !== 'desc') {
                     // Si el valor de 'order' no es 'asc' ni 'desc', podrías devolver un error
                     return response.status(400).send({
@@ -102,11 +111,11 @@ const UsuarioController = {
                 }
             }
 
-            const emailSinSanitizar = request.params.email;
+            let emailSinSanitizar = request.params.email;
             email = validator.blacklist(emailSinSanitizar, '!"#$%&/()=?¿¡');
-            const regex = new RegExp(email, 'i');
+            let regex = new RegExp(email, 'i');
             
-            const usuario = await Usuario.find({ email: regex }).sort({[sortBy]: sortOrder});
+            let usuario = await Usuario.find({ email: regex }).sort({[sortBy]: sortOrder});
 
             await UsuarioValidator.validarUsuarios(usuario);
 
@@ -127,29 +136,27 @@ const UsuarioController = {
 
     guardarDatosUsuario: async (request, response) => {
         try {
-            const nombreSinSanitizar = request.body.nombre;
-            const emailSinSanitizar = request.body.email;
-            const superUsuario = false;
-            const activo = true;
+            let nombreSinSanitizar = request.body.nombre;
+            let emailSinSanitizar = request.body.email;
 
-            request.body.hasOwnProperty('superUsuario') ? superUsuario = request.body.superUsuario : superUsuario = false;
-            request.body.hasOwnProperty('activo') ? activo = request.body.activo : activo = true;
-
-            const nombre = validator.blacklist(nombreSinSanitizar, '!"#$%&/()=?¿¡');
-            const email = validator.blacklist(emailSinSanitizar, '!"#$%&/()=?¿¡');
+            let nombre = validator.blacklist(nombreSinSanitizar, '!"#$%&/()=?¿¡');
+            let email = validator.blacklist(emailSinSanitizar, '!"#$%&/()=?¿¡');
 
             await UsuarioValidator.validarNombre(nombre);
             await UsuarioValidator.validarEmail(email);
 
-            const contraseña = crypto.randomBytes(8).toString('hex'); 
-            const hashedContraseña = await bcrypt.hash(contraseña, 10);
+            let contraseña = crypto.randomBytes(8).toString('hex'); 
+            let hashedContraseña = await bcrypt.hash(contraseña, 10);
+
+            let avatar = await generarAvatar(nombre);
         
             const nuevoUsuario = new Usuario({
                 nombre,
                 email,
                 contraseña: hashedContraseña,
-                avatar: 'test',
-                superUsuario
+                avatar: avatar,
+                superUsuario: request.body.superUsuario || false, // Si existe, usa el valor, sino false
+                activo: request.body.activo ?? true
             });
 
 
@@ -259,7 +266,23 @@ const UsuarioController = {
             });
         }
     }
-    
 };
 
+async function generarAvatar(nombreUsuario){
+
+    const valor = '0123456789ABCDEF';
+    let avatar;
+    let color = '#';
+    let nombre = nombreUsuario;
+
+    for (let i = 0; i< 6 ; i++){
+        color += valor[Math.floor(Math.random() * valor.length)];
+    }
+
+    let primerLetra = nombre.substring(0, 1);
+
+    avatar = `${primerLetra}${color}`;
+
+    return avatar;
+}
 export default UsuarioController;

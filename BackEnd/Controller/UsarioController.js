@@ -14,7 +14,17 @@ const UsuarioController = {
         try {
 
             const sortBy = request.query.sortBy || 'fechaRegistro';
-            const sortOrder = request.query.order === 'asc' ? 1 : -1;
+            if (request.query.order) {
+                const order = request.query.order.toLowerCase();
+                if (order === 'asc') {
+                    sortOrder = 1;
+                } else if (order !== 'desc') {
+                    // Si el valor de 'order' no es 'asc' ni 'desc', podrías devolver un error
+                    return response.status(400).send({
+                        message: "El parámetro 'order' debe ser 'asc' o 'desc'."
+                    });
+                }
+            }
 
 
             const usuarios = await Usuario.find().sort({[sortBy]: sortOrder});
@@ -40,11 +50,24 @@ const UsuarioController = {
     obtenerDatosUsuarioByNombre: async (request, response) => {
         let nombre;
         try{
+            const sortBy = request.query.sortBy || 'fechaRegistro';
+            if (request.query.order) {
+                const order = request.query.order.toLowerCase();
+                if (order === 'asc') {
+                    sortOrder = 1;
+                } else if (order !== 'desc') {
+                    // Si el valor de 'order' no es 'asc' ni 'desc', podrías devolver un error
+                    return response.status(400).send({
+                        message: "El parámetro 'order' debe ser 'asc' o 'desc'."
+                    });
+                }
+            }
+
             const nombreSinSanitizar = request.params.nombre;
             nombre = validator.blacklist(nombreSinSanitizar, '!"#$%&/()=?¿¡');
             const regex = new RegExp(nombre, 'i');
             
-            const usuario = await Usuario.find({ nombre: regex });
+            const usuario = await Usuario.find({ nombre: regex }).sort({[sortBy]: sortOrder});
 
             await UsuarioValidator.validarUsuarios(usuario);
 
@@ -66,11 +89,24 @@ const UsuarioController = {
     obtenerDatosUsuarioByEmail: async (request, response) => {
         let email;
         try{
+            const sortBy = request.query.sortBy || 'fechaRegistro';
+            if (request.query.order) {
+                const order = request.query.order.toLowerCase();
+                if (order === 'asc') {
+                    sortOrder = 1;
+                } else if (order !== 'desc') {
+                    // Si el valor de 'order' no es 'asc' ni 'desc', podrías devolver un error
+                    return response.status(400).send({
+                        message: "El parámetro 'order' debe ser 'asc' o 'desc'."
+                    });
+                }
+            }
+
             const emailSinSanitizar = request.params.email;
             email = validator.blacklist(emailSinSanitizar, '!"#$%&/()=?¿¡');
             const regex = new RegExp(email, 'i');
             
-            const usuario = await Usuario.find({ email: regex });
+            const usuario = await Usuario.find({ email: regex }).sort({[sortBy]: sortOrder});
 
             await UsuarioValidator.validarUsuarios(usuario);
 
@@ -93,7 +129,11 @@ const UsuarioController = {
         try {
             const nombreSinSanitizar = request.body.nombre;
             const emailSinSanitizar = request.body.email;
-            const superUsuario = request.body.superusuario;
+            const superUsuario = false;
+            const activo = true;
+
+            request.body.hasOwnProperty('superUsuario') ? superUsuario = request.body.superUsuario : superUsuario = false;
+            request.body.hasOwnProperty('activo') ? activo = request.body.activo : activo = true;
 
             const nombre = validator.blacklist(nombreSinSanitizar, '!"#$%&/()=?¿¡');
             const email = validator.blacklist(emailSinSanitizar, '!"#$%&/()=?¿¡');
@@ -103,8 +143,6 @@ const UsuarioController = {
 
             const contraseña = crypto.randomBytes(8).toString('hex'); 
             const hashedContraseña = await bcrypt.hash(contraseña, 10);
-                console.log("la contraseña es: "+contraseña);
-                console.log("la contraseña encriptada es: "+hashedContraseña);
         
             const nuevoUsuario = new Usuario({
                 nombre,
@@ -114,11 +152,9 @@ const UsuarioController = {
                 superUsuario
             });
 
-                console.log(nuevoUsuario);
 
             await nuevoUsuario.save();
 
-        //const user = await nuevoUsuario.save(); 
 
                 console.log(chalk.green("Peticion correctamente respondida"));
             return response.status(201).send({
@@ -152,6 +188,13 @@ const UsuarioController = {
 
             if (request.body.email) {
              nuevosDatos.email = validator.blacklist(request.body.email, '!"#$%&/()=?¿¡');
+            }
+
+            if (request.body.hasOwnProperty('activo')) {
+                nuevosDatos.activo = request.body.activo;
+            }
+            if (request.body.hasOwnProperty('superUsuario')) {
+                nuevosDatos.superUsuario = request.body.superUsuario;
             }
 
             // Si no hay campos para actualizar, devolver un error

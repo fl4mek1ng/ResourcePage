@@ -10,23 +10,13 @@ const port = 3900;
 
 mongoose.Promise = global.Promise;
 
-
-//Codigo para establecer Conexion con el servidor y la Base de datos Educacion
 mongoose.connect(url)
-
-//Codigo en caso de que la conexion sea exitosa con la Base de Datos
-    .then(() =>{
-      console.log(chalk.green('La conexion ha sido exitosa')); 
-      
-      //Crear servidor para la recepcion de peticiones
-      app.listen(port, () =>{
-        console.log(chalk.blue('Servidor corriendo en http://localhost:'+port));
-      })
-
-})
-//Codigo en caso de que la conexion NO sea exitosa con la Base de Datos
-.catch((error) => {
-    console.log(chalk.red('Error en la conexión a la base de datos:', error.message));
-}
-
-);
+    .then(() => {
+        console.log(chalk.green('La conexión ha sido exitosa'));
+        app.listen(port, () => {
+            console.log(chalk.blue(`Servidor corriendo en http://localhost:${port}`));
+        });
+    })
+    .catch((error) => {
+        console.log(chalk.red('Error en la conexión a la base de datos:', error.message));
+    });
